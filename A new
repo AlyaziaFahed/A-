@@ -14,6 +14,9 @@ class SocialMediaPost:
         self.person = person
         self.views = views
 
+    def __lt__(self, other):
+        # This ensures that the SocialMediaPost objects are compared based on views when placed in the heap #without this u wount be able to print more than 9999 post
+        return self.views < other.views
 
     def __repr__(self):
         return f"{self.datetime} - {self.post} by {self.person} ({self.views} views)"
@@ -49,62 +52,62 @@ class SocialMediaManager:
 
     def _height(self, node):
         """ Return node height or 0 if node is None """
-        if not node:
+        if not node: # If node is None, return 0
             return 0
-        return node.height
+        return node.height # Otherwise, return the height of the node
 
     def _update_height(self, node):
         """ Update node's height based on its children's heights """
-        node.height = max(self._height(node.left), self._height(node.right)) + 1
+        node.height = max(self._height(node.left), self._height(node.right)) + 1 # Update the node's height based on its children
 
     def _balance_factor(self, node):
         """ Calculate node's balance factor to check for imbalances """
-        if not node:
+        if not node: # If node is None, its balance factor is 0
             return 0
-        return self._height(node.left) - self._height(node.right)
+        return self._height(node.left) - self._height(node.right) # Balance factor is left child's height minus right child's height
 
     def _rotate_right(self, y):
         """ Perform right rotation around node y to restore balance """
-        x = y.left
-        T2 = x.right
-        x.right = y
-        y.left = T2
-        self._update_height(y)
-        self._update_height(x)
-        return x
+        x = y.left # Set x to y's left child
+        T2 = x.right  # Temporary store x's right child
+        x.right = y # y becomes x's right child
+        y.left = T2 # T2 becomes y's left child
+        self._update_height(y) # Update the height of y
+        self._update_height(x)  # Update the height of x
+        return x  # Return new root of the subtree
 
     def _rotate_left(self, x):
         """ Perform left rotation around node x to restore balance """
-        y = x.right
-        T2 = y.left
-        y.left = x
-        x.right = T2
-        self._update_height(x)
-        self._update_height(y)
-        return y
+        y = x.right  # Set y to x's right child
+        T2 = y.left  # Temorary store y's left child
+        y.left = x # x becoms y's left child
+        x.right = T2 # T2 becomes x's right child
+        self._update_height(x) # Updat the height of x
+        self._update_height(y) # Update the height of y
+        return y  # Return new rot of the subtree
 
     def _rebalance(self, node, post_datetime):
         """ Rebalance AVL tree after insertion to maintain properties """
-        if not node:
+        if not node: # If node is Non there is nothing to rebalance
             return node
 
-        self._update_height(node)
-        balance = self._balance_factor(node)
+        self._update_height(node) # Update height of the current node
+        balance = self._balance_factor(node)  # Calculate balance factor to check if node is unbalanced
 
-        # Left Left Case
+        # Left Left Case (  If node is left heavy and the post date is older than left child's date do right rotation)
         if balance > 1 and post_datetime < node.left.datetime:
             return self._rotate_right(node)
 
-        # Right Right Case
+        # Right Right Case (If node is right heavy and the post date is newer than right child's date do left rotation)
         if balance < -1 and post_datetime > node.right.datetime:
             return self._rotate_left(node)
 
-        # Left Right Case
+        # Left Right Case ( If node is left heavy but the post date is newer than left child's date do left-right rotation)
         if balance > 1 and post_datetime > node.left.datetime:
-            node.left = self._rotate_left(node.left)
+            node.left = self._rotate_left(node.left)  #First left rotation on left child
             return self._rotate_right(node)
 
-        # Right Left Case
+        # Right Left Case - same as above
         if balance < -1 and post_datetime < node.right.datetime:
             node.right = self._rotate_right(node.right)
             return self._rotate_left(node)
@@ -113,32 +116,32 @@ class SocialMediaManager:
 
     def add_post_to_avl(self, post):
         """ Insert a new post into AVL tree """
-        post_datetime = datetime.strptime(post.datetime, "%Y-%m-%d %H:%M:%S")
+        post_datetime = datetime.strptime(post.datetime, "%Y-%m-%d %H:%M:%S") # Convert date and time from string to a datetime object
         if not self.root:
-            self.root = AVLNode(post, post_datetime)
-        else:
+            self.root = AVLNode(post, post_datetime) # If the tree is empt set the new post as the root node
+        else:  # If the tree is not empty insert the post into the tree
             self.root = self._insert_avl(self.root, post, post_datetime)
 
     def _insert_avl(self, node, post, post_datetime):
         """ Insert node recursively and rebalance """
-        if not node:
+        if not node: # If current spot is empt insert the node here
             return AVLNode(post, post_datetime)
-        if post_datetime < node.datetime:
+        if post_datetime < node.datetime: # If the post's date is earlier insert into the left subtree
             node.left = self._insert_avl(node.left, post, post_datetime)
-        else:
+        else: # If the post's date is the same or later, insert into the right subtree
             node.right = self._insert_avl(node.right, post, post_datetime)
-
+         #rebalance the tree starting from the current node
         return self._rebalance(node, post_datetime)
 
     def get_posts_in_range_from_bst(self, start_datetime, end_datetime):
-        """ Collect posts within a date range """
-        result = []
-        self._get_range(self.root, start_datetime, end_datetime, result)
-        return result
+        """ Collect posts within a dat range """
+        result = [] #  empty list to collect posts
+        self._get_range(self.root, start_datetime, end_datetime, result)  # Start traversing the tree from the root to find and collect posts in the date range
+        return result # Return the collected list of posts
 
     def _get_range(self, node, start_datetime, end_datetime, result):
-        """ Traverse tree and collect posts in the given range """
-        if node is not None:
+        """ Traverse tree and collect posts in he given range """
+        if node is not None: # If the current node is not None, proceed with traversal
             # Check left subtree if it might contain relevant posts
             if start_datetime <= node.datetime:
                 self._get_range(node.left, start_datetime, end_datetime, result)
@@ -190,16 +193,18 @@ def generate_random_posts(num_posts, max_users=100):
     post_heap = PostHeap() # Initialize the heap for managing posts by views
 
     for _ in range(num_posts):
+        # Randomize datetime within a range starting from the base_datetime to now
         random_datetime = base_datetime - timedelta(days=random.randint(0, 365), hours=random.randint(0, 24), minutes=random.randint(0, 60))# Generate a random past datetime for the post
         random_person = random.choice(persons) # Randomly select a user for the post
         random_text = random.choice(texts) # Randomly select a topic for the post
         random_views = random.randint(0, 100000) # Generate a random view count
         new_post = SocialMediaPost(datetime=random_datetime.strftime("%Y-%m-%d %H:%M:%S"), post=random_text, person=random_person, views=random_views) # Create a new post object
+        # Construct the post with a timestamp, content, author, and view count
         manager.add_post_to_avl(new_post) # Add the post to the binary search tree
         post_heap.add_post_to_heap(new_post) # Add the post to the heap
         add_post_to_dict(new_post)  # Add the post to the dictionary(hashtbales)
 
-    return manager, post_heap
+    return manager, post_heap # Return the AVL tree and heap containing the posts
 
 
 # 006: Main program execution
