@@ -14,9 +14,6 @@ class SocialMediaPost:
         self.person = person
         self.views = views
 
-    def __lt__(self, other):
-        # This ensures that the SocialMediaPost objects are compared based on views when placed in the heap.
-        return self.views < other.views
 
     def __repr__(self):
         return f"{self.datetime} - {self.post} by {self.person} ({self.views} views)"
